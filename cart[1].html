@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart | Tempest Collective</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/cart.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <div id="page-loader" class="loader-overlay">
+        <div class="loader"></div>
+    </div>
+
+    <header class="navbar">
+        <div class="logo">
+            <img src="assets/img/slime.png" alt="Slime" class="slime-icon">
+            Tempest Collective
+        </div>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="shop.html">Products</a>
+            <a href="cart.html" style="color:#00ffe5;">Cart</a>
+        </nav>
+    </header>
+
+    <div class="cart-wrapper">
+        <h1 class="page-title">Shopping Cart</h1>
+        
+        <div id="cart-items-container" class="cart-items-container">
+            </div>
+
+        <div id="empty-cart-msg" class="empty-msg" style="display:none;">
+            <h2>Your cart is empty.</h2>
+            <p>Looks like you haven't added any gear yet.</p>
+            <a href="shop.html" class="back-btn">Go to Shop</a>
+        </div>
+
+        <div class="cart-summary" id="cart-summary">
+            <div class="total-row">
+                <span>Total:</span>
+                <span id="cart-total">$0.00</span>
+            </div>
+
+            <button class="order" id="checkout-btn">
+                <span class="default">Complete Order</span>
+                <span class="success">Order Placed
+                    <svg viewBox="0 0 12 10">
+                        <polyline points="1.5 6 4.5 9 10.5 1"></polyline>
+                    </svg>
+                </span>
+                <div class="box"></div>
+                <div class="truck">
+                    <div class="back"></div>
+                    <div class="front">
+                        <div class="window"></div>
+                    </div>
+                    <div class="light top"></div>
+                    <div class="light bottom"></div>
+                </div>
+                <div class="lines"></div>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            // loader logic
+            const loader = document.getElementById('page-loader');
+            const links = document.querySelectorAll('a');
+            links.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    const target = this.getAttribute('href');
+                    if (target && !target.startsWith('#') && !this.classList.contains('qty-btn') && !this.classList.contains('remove-btn')) {
+                        e.preventDefault();
+                        loader.classList.add('active');
+                        setTimeout(() => window.location.href = target, 2000);
+                    }
+                });
+            });
+
+            // cart logic
+            const cartContainer = document.getElementById('cart-items-container');
+            const emptyMsg = document.getElementById('empty-cart-msg');
+            const cartSummary = document.getElementById('cart-summary');
+            const totalElement = document.getElementById('cart-total');
+            
+            let cart = JSON.parse(localStorage.getItem('animeCart')) || [];
+
+            function renderCart() {
+                cartContainer.innerHTML = '';
+                let totalPrice = 0;
+
+                if (cart.length === 0) {
+                    emptyMsg.style.display = 'block';
+                    cartSummary.style.display = 'none';
+                    return;
+                } else {
+                    emptyMsg.style.display = 'none';
+                    cartSummary.style.display = 'flex';
+                }
+
+                cart.forEach((item, index) => {
+                    let priceString = item.price.toString().replace('$', '');
+                    let numericPrice = parseFloat(priceString);
+                    let itemTotal = numericPrice * item.quantity;
+                    totalPrice += itemTotal;
+
+                    const itemDiv = document.createElement('div');
+                    itemDiv.classList.add('cart-item');
+                    itemDiv.innerHTML = `
+                        <div class="item-img-wrapper">
+                            <img src="${item.image}" alt="${item.name}">
+                        </div>
+                        <div class="item-info-group">
+                            <div class="item-details">
+                                <h3>${item.name}</h3>
+                                <p class="single-price">${item.price}</p>
+                            </div>
+                            
+                            <div class="item-actions">
+                                <div class="item-controls">
+                                    <button class="qty-btn minus" onclick="updateQty(${index}, -1)">-</button>
+                                    <span class="qty-display">${item.quantity}</span>
+                                    <button class="qty-btn plus" onclick="updateQty(${index}, 1)">+</button>
+                                </div>
+                                <div class="item-total-price">
+                                    $${itemTotal.toFixed(2)}
+                                </div>
+                                <button class="remove-btn" onclick="removeItem(${index})" title="Remove Item">&times;</button>
+                            </div>
+                        </div>
+                    `;
+                    cartContainer.appendChild(itemDiv);
+                });
+
+                totalElement.innerText = '$' + totalPrice.toFixed(2);
+            }
+
+            window.updateQty = function(index, change) {
+                if (cart[index].quantity + change > 0) {
+                    cart[index].quantity += change;
+                    localStorage.setItem('animeCart', JSON.stringify(cart));
+                    renderCart();
+                }
+            };
+
+            window.removeItem = function(index) {
+                cart.splice(index, 1);
+                localStorage.setItem('animeCart', JSON.stringify(cart));
+                renderCart();
+            };
+
+
+            renderCart();
+
+            // truck logic
+            const orderBtn = document.getElementById('checkout-btn');
+            
+            if(orderBtn) {
+                orderBtn.addEventListener('click', function() {
+                    if (!orderBtn.classList.contains('animate')) {
+                        
+                        orderBtn.classList.add('animate');
+                        
+                        setTimeout(() => {
+                            localStorage.removeItem('animeCart');
+                            cart = [];
+                            renderCart();
+                            
+                            orderBtn.classList.remove('animate');
+                            
+                            alert("Order placed successfully! Returning to shop...");
+                            window.location.href = "shop.html";
+
+                        }, 6000);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
